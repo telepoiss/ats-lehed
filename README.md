@@ -34,6 +34,14 @@ Ava http://localhost:8765
 
 ## Jagatud andmebaas (Firebase)
 
+Projekt on olemas: `ats-lehed-qpu23-4cd68` (konsool: https://console.firebase.google.com/project/ats-lehed-qpu23-4cd68). Reeglid on kaustas `firebase/`, uuendamiseks:
+
+```bash
+cd firebase && npx -y firebase-tools deploy --only firestore:rules
+```
+
+Uue projekti loomiseks:
+
 1. Loo projekt aadressil https://console.firebase.google.com (Google'i kontoga).
 2. Build → Firestore Database → Create database → asukoht `europe-west` → **test mode**.
 3. Project settings (hammasratas) → Your apps → `</>` Web → registreeri äpp → kopeeri `firebaseConfig`.
@@ -51,5 +59,5 @@ service cloud.firestore {
 }
 ```
 
-Iga kogul on oma kood lingis (`#kogu=abc123`). Kes avab sama lingi, näeb ja muudab sama nimekirja.
-Päises olev nupp "Jaga" kopeerib selle lingi.
+Kõik, kes avavad https://telepoiss.github.io/ats-lehed/, jagavad ühte kogu (`DEFAULT_KOGU` failis `src/config.js`). Eraldi kogu saab lingiga `#kogu=minukood`.
+Päises olev nupp "Jaga" kopeerib lingi.
