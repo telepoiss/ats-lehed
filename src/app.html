@@ -1,0 +1,547 @@
+<title>Atsi lehekogu</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap">
+<style>
+  :root {
+    --bg: #F1F4EB; --card: #FFFFFF; --ink: #1B241D; --muted: #5D6B60; --line: #D5DCCF;
+    --accent: #3A7A4B; --accent-ink: #FFFFFF; --accent-soft: #E1EEE1; --accent-line: #A9CBB0;
+    --warn: #AE5330; --warn-soft: #F7E6DD; --shadow: 0 1px 2px rgba(27,36,29,.06), 0 6px 20px rgba(27,36,29,.06);
+    --display: "Fraunces", Georgia, "Times New Roman", serif;
+    --body: "Atkinson Hyperlegible", "Helvetica Neue", Arial, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #121812; --card: #1B241D; --ink: #E7ECE3; --muted: #9DAA9F; --line: #2C382F;
+      --accent: #7EC58C; --accent-ink: #0F1A12; --accent-soft: #1F3526; --accent-line: #3E6B49;
+      --warn: #E4987A; --warn-soft: #3B2519; --shadow: 0 1px 2px rgba(0,0,0,.3), 0 6px 20px rgba(0,0,0,.25);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #121812; --card: #1B241D; --ink: #E7ECE3; --muted: #9DAA9F; --line: #2C382F;
+    --accent: #7EC58C; --accent-ink: #0F1A12; --accent-soft: #1F3526; --accent-line: #3E6B49;
+    --warn: #E4987A; --warn-soft: #3B2519; --shadow: 0 1px 2px rgba(0,0,0,.3), 0 6px 20px rgba(0,0,0,.25);
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.45 var(--body); -webkit-text-size-adjust: 100%; }
+  button, input, textarea { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  button:focus-visible, input:focus-visible, textarea:focus-visible, a:focus-visible { outline: 3px solid var(--accent-line); outline-offset: 2px; }
+  h1, h2, h3 { font-family: var(--display); font-weight: 600; margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+  .wrap { max-width: 760px; margin: 0 auto; padding-inline: 16px; }
+
+  /* Päis */
+  .top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); border-bottom: 1px solid var(--line); }
+  .top .wrap { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: end; padding-block: 12px 10px; }
+  .top h1 { font-size: 26px; line-height: 1.1; }
+  .top .sub { color: var(--muted); font-size: 14px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .status { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; }
+  .status::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+  .status.db::before { background: var(--accent); }
+  .status.readonly::before { background: var(--warn); }
+  .bar { grid-column: 1 / -1; height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; }
+  .bar > i { display: block; height: 100%; width: 0; background: var(--accent); border-radius: 3px; transition: width .3s ease; }
+  .btn { border: 1px solid var(--line); background: var(--card); border-radius: 10px; padding: 9px 14px; font-weight: 700; font-size: 14px; }
+  .btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  .btn.ghost { background: transparent; }
+  .top-btns { display: flex; gap: 6px; }
+
+  /* Filtrid */
+  .filters { display: flex; gap: 8px; overflow-x: auto; padding-block: 12px 4px; scrollbar-width: none; }
+  .filters::-webkit-scrollbar { display: none; }
+  .chip { flex: 0 0 auto; border: 1px solid var(--line); background: var(--card); border-radius: 999px; padding: 7px 13px; font-size: 14px; }
+  .chip[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+
+  /* Nimekiri */
+  .list { display: grid; gap: 10px; padding-block: 8px 32px; }
+  @media (min-width: 720px) { .list { grid-template-columns: 1fr 1fr; } }
+  .card { display: grid; grid-template-columns: 88px 1fr; gap: 0 12px; background: var(--card); border-radius: 14px; box-shadow: var(--shadow); overflow: hidden; border: 1px solid transparent; }
+  .card.done { border-color: var(--accent-line); }
+  .card .thumb { grid-row: 1 / span 2; width: 88px; height: 100%; min-height: 110px; object-fit: cover; background: var(--accent-soft); cursor: pointer; }
+  .card .head { padding: 10px 12px 0 0; cursor: pointer; }
+  .card .nr { font-family: var(--display); color: var(--muted); font-size: 13px; }
+  .card h2 { font-size: 19px; line-height: 1.15; }
+  .card h2 .done-mark { color: var(--accent); font-size: 16px; margin-left: 4px; }
+  .card .latin { color: var(--muted); font-style: italic; font-size: 13px; }
+  .card .place { font-size: 13px; color: var(--accent); margin-top: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .card .tags { display: flex; gap: 8px; flex-wrap: wrap; padding: 8px 12px 12px 0; align-self: end; }
+  .part { border: 1px solid var(--line); background: var(--card); border-radius: 10px; padding: 8px 14px 8px 10px; font-size: 15px; display: inline-flex; align-items: center; gap: 9px; min-height: 46px; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+  .part::before { content: ""; width: 22px; height: 22px; border-radius: 6px; border: 2px solid var(--muted); flex: none; }
+  .part:active { transform: scale(.97); }
+  .part.plain { color: var(--accent); border-style: dashed; }
+  .part.plain::before { display: none; }
+  .collect h3 small { display: block; font-family: var(--body); font-weight: 400; font-size: 13px; color: var(--muted); margin-top: 2px; }
+  .part[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent-line); color: var(--ink); }
+  .part[aria-pressed="true"]::before { background: var(--accent); border-color: var(--accent); background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Cpath d='M3 7.5l2.5 2.5L11 4.5' fill='none' stroke='white' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background-size: 18px; background-position: center; background-repeat: no-repeat; }
+  .quick { grid-column: 1 / -1; border-top: 1px solid var(--line); background: var(--accent-soft); padding: 10px 12px 12px; display: grid; gap: 8px; }
+  .qf { display: grid; gap: 3px; font-size: 13px; color: var(--muted); font-weight: 700; }
+  .qf input { width: 100%; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; background: var(--card); min-height: 44px; font-weight: 400; color: var(--ink); }
+  .qrow { display: flex; gap: 8px; justify-content: space-between; align-items: center; margin-top: 2px; }
+  .qrow .btn { min-height: 44px; }
+  @media (min-width: 480px) { .quick { grid-template-columns: 1fr 1fr; } .quick .qf:first-child, .qrow { grid-column: 1 / -1; } }
+  .tag { font-size: 12px; color: var(--warn); background: var(--warn-soft); border-radius: 6px; padding: 4px 8px; font-weight: 700; letter-spacing: .02em; }
+  .empty { color: var(--muted); text-align: center; padding: 40px 0; }
+
+  /* Detailvaade ja sildid */
+  .sheet { position: fixed; inset: 0; z-index: 20; background: var(--bg); overflow-y: auto; overscroll-behavior: contain; padding-bottom: env(safe-area-inset-bottom, 0px); }
+  .sheet .wrap { padding-block: 0 48px; }
+  .sheet-top { position: sticky; top: 0; z-index: 2; background: var(--bg); display: flex; align-items: center; gap: 8px; padding-block: 10px; padding-top: calc(10px + env(safe-area-inset-top, 0px)); border-bottom: 1px solid var(--line); margin-bottom: 14px; }
+  .sheet-top h2 { font-size: 21px; flex: 1; line-height: 1.15; }
+  .sheet-top .latin { display: block; color: var(--muted); font-style: italic; font-family: var(--body); font-weight: 400; font-size: 13px; }
+  .back { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--line); background: var(--card); display: grid; place-items: center; flex: none; font-size: 18px; }
+  .gallery { display: flex; gap: 10px; overflow-x: auto; scroll-snap-type: x mandatory; margin-inline: -16px; padding-inline: 16px; padding-bottom: 6px; scrollbar-width: none; }
+  .gallery::-webkit-scrollbar { display: none; }
+  .gallery figure, .gallery .more { flex: 0 0 min(82%, 340px); scroll-snap-align: start; margin: 0; background: var(--card); border-radius: 12px; overflow: hidden; box-shadow: var(--shadow); }
+  .gallery img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; display: block; background: var(--accent-soft); }
+  .gallery figcaption { padding: 7px 10px 9px; font-size: 13px; color: var(--muted); }
+  .gallery .more { display: grid; align-content: center; gap: 8px; padding: 14px; text-align: center; }
+  .gallery .more p { margin: 0 0 4px; color: var(--muted); font-size: 14px; }
+  .gallery .more a { display: block; text-decoration: none; text-align: center; }
+  .dots { display: flex; gap: 5px; justify-content: center; margin-top: 8px; }
+  .dots i { width: 6px; height: 6px; border-radius: 50%; background: var(--line); }
+  .dots i.on { background: var(--accent); }
+  .hint { color: var(--muted); font-size: 13px; text-align: center; margin: 6px 0 0; }
+  .section { margin-top: 22px; }
+  .section h3 { font-size: 15px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-family: var(--body); font-weight: 700; margin-bottom: 8px; }
+  .section ul { margin: 0; padding-left: 20px; }
+  .section li { margin-bottom: 6px; }
+  .section p { margin: 0; }
+  .note { background: var(--warn-soft); color: var(--ink); border-left: 3px solid var(--warn); padding: 10px 12px; border-radius: 0 10px 10px 0; }
+  .collect { background: var(--card); border-radius: 14px; box-shadow: var(--shadow); padding: 14px; margin-top: 22px; }
+  .collect h3 { font-family: var(--display); font-size: 19px; text-transform: none; letter-spacing: 0; color: var(--ink); margin-bottom: 10px; }
+  .collect .tags { display: flex; gap: 8px; flex-wrap: wrap; }
+  .collect .part { min-height: 52px; font-size: 16px; padding: 10px 16px 10px 12px; }
+  .field { display: grid; gap: 4px; margin-top: 12px; }
+  .field label { font-size: 13px; color: var(--muted); font-weight: 700; }
+  .field input, .field textarea { width: 100%; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; background: var(--bg); min-height: 44px; }
+  .field textarea { min-height: 88px; resize: vertical; }
+  .field input:disabled, .field textarea:disabled { opacity: .7; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; align-items: center; }
+  .photo { margin-top: 12px; display: grid; gap: 8px; }
+  .photo img { width: 100%; max-height: 320px; object-fit: cover; border-radius: 10px; display: block; }
+  .photo-btn { position: relative; overflow: hidden; }
+  .photo-btn input { position: absolute; inset: 0; opacity: 0; width: 100%; cursor: pointer; }
+  .credits { margin-top: 28px; color: var(--muted); font-size: 12px; }
+  .credits a { color: inherit; }
+  .toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 999px; font-size: 14px; z-index: 50; opacity: 0; transition: opacity .2s; pointer-events: none; }
+  .toast.show { opacity: 1; }
+
+  /* Sildid */
+  .labels { display: grid; gap: 10px; }
+  @media (min-width: 600px) { .labels { grid-template-columns: 1fr 1fr; } }
+  .label-card { background: var(--card); border: 1px dashed var(--line); border-radius: 10px; padding: 12px 14px; font-size: 14px; break-inside: avoid; }
+  .label-card b { font-family: var(--display); font-size: 17px; display: block; font-weight: 600; }
+  .label-card i { color: var(--muted); display: block; margin-bottom: 6px; }
+  .label-card .missing { color: var(--warn); }
+  .label-card dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; }
+  .label-card dt { color: var(--muted); }
+  .label-card dd { margin: 0; }
+  @media print {
+    .top, .filters, .list, .sheet-top, .row, .toast { display: none !important; }
+    .sheet { position: static; background: #fff; color: #000; }
+    .labels { grid-template-columns: 1fr 1fr; }
+    .label-card { border: 1px solid #000; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<header class="top">
+  <div class="wrap">
+    <div>
+      <h1>Atsi lehekogu</h1>
+      <div class="sub"><span id="progress">0 / 15 puud koos</span><span id="status" class="status">Ainult selles seadmes</span></div>
+    </div>
+    <div class="top-btns"><button class="btn ghost" id="shareBtn" type="button" hidden title="Kopeeri link, millega teised näevad sama nimekirja">Jaga</button><button class="btn" id="labelsBtn" type="button">Sildid</button></div>
+    <div class="bar"><i id="bar"></i></div>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="filters" id="filters" role="group" aria-label="Filtrid">
+    <button class="chip" type="button" data-filter="all" aria-pressed="true">Kõik</button>
+    <button class="chip" type="button" data-filter="todo" aria-pressed="false">Puudu</button>
+    <button class="chip" type="button" data-filter="done" aria-pressed="false">Olemas</button>
+    <button class="chip" type="button" data-filter="lehtpuu" aria-pressed="false">Lehtpuud</button>
+    <button class="chip" type="button" data-filter="okaspuu" aria-pressed="false">Okaspuud</button>
+    <button class="chip" type="button" data-filter="kasutamine" aria-pressed="false">+ kasutamine</button>
+  </div>
+  <div class="list" id="list"></div>
+</main>
+
+<section class="sheet" id="detail" hidden aria-modal="true" role="dialog"></section>
+<section class="sheet" id="labels" hidden aria-modal="true" role="dialog"></section>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+__DATA__
+</script>
+<script>
+__CONFIG__
+</script>
+<script>
+__IMAGES__
+</script>
+<script>
+(function () {
+  "use strict";
+  const IMG = window.IMAGES || {};
+  const CREDITS = window.CREDITS || {};
+  const IN_ARTIFACT = !!(window.claude && typeof window.claude.use === "function");
+  const KOGU = roomCode();
+  const LS_KEY = "lehekogu.v1" + (window.FIREBASE_CONFIG ? ":" + KOGU : "");
+  const LS_NAME = "lehekogu.korjaja";
+
+  // Kogu kood: kõik, kes avavad sama lingi (#kogu=...), näevad sama nimekirja.
+  function roomCode() {
+    const m = location.hash.match(/kogu=([A-Za-z0-9_-]{3,40})/);
+    let code = m ? m[1] : null;
+    if (!code) { try { code = localStorage.getItem("lehekogu.kogu"); } catch (e) {} }
+    if (!code) code = Math.random().toString(36).slice(2, 8);
+    try { localStorage.setItem("lehekogu.kogu", code); } catch (e) {}
+    if (!m && window.FIREBASE_CONFIG && !IN_ARTIFACT) { try { history.replaceState(null, "", "#kogu=" + code); } catch (e) {} }
+    return code;
+  }
+  const BY_ID = Object.fromEntries(TREES.map(t => [t.id, t]));
+
+  let items = loadLocal();
+  let mode = "local";           // local | db | readonly
+  let remote = null, dbReady = false;   // remote: { set(id, data), subscribe(next, err) }
+  let filter = "all";
+  let openId = null;
+  let expandedId = null;   // kaart, millel on kiirvorm lahti
+  const queues = {}, timers = {};
+
+  const $ = (s, r) => (r || document).querySelector(s);
+  const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const imgSrc = k => IMG[k] || "";
+  const today = () => new Date().toISOString().slice(0, 10);
+  const fmtDate = iso => { if (!iso) return ""; const [y, m, d] = iso.split("-"); return d && m && y ? `${d}.${m}.${y}` : iso; };
+
+  function loadLocal() { try { return JSON.parse(localStorage.getItem(LS_KEY) || "{}") || {}; } catch (e) { return {}; } }
+  function saveLocal() { try { localStorage.setItem(LS_KEY, JSON.stringify(items)); } catch (e) {} }
+  function rec(id) { return items[id] || (items[id] = { parts: {}, koht: "", korjaja: "", kuupaev: "", kasutamine: "", photo: "" }); }
+  function hasContent(r) { return !!r && (Object.values(r.parts || {}).some(Boolean) || r.koht || r.korjaja || r.kasutamine || r.photo); }
+  function isDone(t) { const r = items[t.id]; return !!r && t.parts.every(p => r.parts && r.parts[p.key]); }
+  function doneCount() { return TREES.filter(isDone).length; }
+
+  // --- salvestamine: alati seadmesse, jagatud olekus ka andmebaasi ---
+  function persist(id, immediate) {
+    saveLocal();
+    if (mode !== "db" || !remote) return;
+    clearTimeout(timers[id]);
+    const write = () => {
+      delete timers[id];
+      const data = JSON.parse(JSON.stringify(rec(id)));
+      queues[id] = (queues[id] || Promise.resolve())
+        .then(() => remote.set(id, data))
+        .catch(e => {
+          if (e && e.code === "invalid_argument") { mode = "readonly"; renderStatus(); toast("Sul on vaatamisõigus – muudatused jäävad ainult sellesse seadmesse."); }
+          else if (e && e.code === "quota_exceeded") toast("Salvestusruum on täis.");
+        });
+    };
+    if (immediate) write(); else timers[id] = setTimeout(write, 700);
+  }
+
+  function onRemoteSnapshot(snap) {
+    if (mode === "local") { mode = "db"; renderStatus(); }
+    if (!dbReady && !snap.metadata.fromCache) {
+      dbReady = true;
+      if (snap.empty && Object.keys(items).some(id => hasContent(items[id]))) {
+        Object.keys(items).forEach(id => hasContent(items[id]) && persist(id, true));
+        return;
+      }
+    }
+    snap.docs.forEach(d => { if (!timers[d.id]) items[d.id] = Object.assign({ parts: {} }, d.data()); });
+    saveLocal();
+    render();
+  }
+  function onRemoteError(err) { if (mode === "db") { mode = "local"; renderStatus(); } }
+
+  function loadScript(src) {
+    return new Promise((res, rej) => { const el = document.createElement("script"); el.src = src; el.onload = res; el.onerror = rej; document.head.appendChild(el); });
+  }
+  async function connectFirebase() {
+    if (!window.FIREBASE_CONFIG || IN_ARTIFACT) return false;
+    try {
+      await loadScript("https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js");
+      await loadScript("https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js");
+      firebase.initializeApp(window.FIREBASE_CONFIG);
+      const fs = firebase.firestore();
+      try { await fs.enablePersistence({ synchronizeTabs: true }); } catch (e) { /* mitu akent või pole toetatud */ }
+      const col = fs.collection("kogud").doc(KOGU).collection("items");
+      remote = { set: (id, data) => col.doc(id).set(data) };
+      col.onSnapshot({ includeMetadataChanges: false }, onRemoteSnapshot, onRemoteError);
+      return true;
+    } catch (e) { remote = null; return false; }
+  }
+  async function connectClaudeDb() {
+    try {
+      if (!IN_ARTIFACT) return false;
+      const d = await window.claude.use("db");
+      if (!d) return false;
+      remote = { set: (id, data) => d.doc("items/" + id).set(data) };
+      d.collection("items").onSnapshot(onRemoteSnapshot, onRemoteError);
+      return true;
+    } catch (e) { return false; }
+  }
+  async function connectRemote() {
+    if (await connectFirebase()) return;
+    await connectClaudeDb();
+  }
+
+  // --- muudatused ---
+  function togglePart(id, key) {
+    if (mode === "readonly") return;
+    const r = rec(id);
+    r.parts = r.parts || {};
+    r.parts[key] = !r.parts[key];
+    if (r.parts[key]) {
+      if (!r.kuupaev) r.kuupaev = today();
+      if (!r.korjaja) { try { r.korjaja = localStorage.getItem(LS_NAME) || ""; } catch (e) {} }
+      if (!openId) expandedId = id;
+    }
+    persist(id, true);
+    render();
+    if (r.parts[key] && !openId) { const i = $(`#list .card[data-id="${id}"] input[data-field="koht"]`); if (i && !i.value) i.focus({ preventScroll: true }); }
+  }
+  function setField(id, key, value) {
+    if (mode === "readonly") return;
+    rec(id)[key] = value;
+    if (key === "korjaja" && value) { try { localStorage.setItem(LS_NAME, value); } catch (e) {} }
+    persist(id, false);
+    renderProgress();
+  }
+
+  // --- vaated ---
+  function render() { renderProgress(); renderStatus(); renderList(); if (openId) renderDetail(false); if (!$("#labels").hidden) renderLabels(); }
+
+  function renderProgress() {
+    const n = doneCount();
+    $("#progress").textContent = `${n} / ${TREES.length} puud koos`;
+    $("#bar").style.width = (100 * n / TREES.length) + "%";
+  }
+  function renderStatus() {
+    const el = $("#status");
+    el.className = "status " + mode;
+    el.textContent = mode === "db" ? "Jagatud – kõik näevad sama" : mode === "readonly" ? "Ainult vaatamiseks" : "Ainult selles seadmes";
+    $("#shareBtn").hidden = !(mode === "db" && window.FIREBASE_CONFIG && !IN_ARTIFACT);
+  }
+  function shareLink() { return location.origin + location.pathname + "#kogu=" + KOGU; }
+
+  function visible(t) {
+    switch (filter) {
+      case "todo": return !isDone(t);
+      case "done": return isDone(t);
+      case "lehtpuu": case "okaspuu": return t.group === filter;
+      case "kasutamine": return !!t.kasutamine;
+      default: return true;
+    }
+  }
+  function quickForm(t, r) {
+    return `<div class="quick">
+      ${LABEL_FIELDS.map(f => `<label class="qf"><span>${esc(f.label)}</span><input type="${f.type || "text"}" data-field="${f.key}" value="${esc(r[f.key] || "")}" placeholder="${esc(f.placeholder || "")}" autocomplete="off"></label>`).join("")}
+      <div class="qrow"><button class="btn primary" type="button" data-done>Valmis</button><button class="btn ghost" type="button" data-open="${t.id}">Rohkem infot →</button></div>
+    </div>`;
+  }
+  function renderList() {
+    const list = $("#list");
+    const focused = list.contains(document.activeElement) && /INPUT/.test(document.activeElement.tagName);
+    if (focused && list.innerHTML) {
+      list.querySelectorAll(".card").forEach(c => { const r = items[c.dataset.id] || { parts: {} }; c.querySelectorAll("[data-part]").forEach(b => b.setAttribute("aria-pressed", String(!!(r.parts && r.parts[b.dataset.part])))); });
+      return;
+    }
+    const shown = TREES.filter(visible);
+    if (!shown.length) { list.innerHTML = `<p class="empty">${filter === "todo" ? "Kõik on koos! 🎉" : "Siin pole midagi."}</p>`; return; }
+    list.innerHTML = shown.map(t => {
+      const r = items[t.id] || { parts: {} };
+      const done = isDone(t);
+      return `<article class="card${done ? " done" : ""}" data-id="${t.id}">
+        <img class="thumb" src="${imgSrc(t.images[0].src)}" alt="" data-open="${t.id}">
+        <div class="head" data-open="${t.id}">
+          <div class="nr">${t.nr}</div>
+          <h2>${esc(t.name)}${done ? '<span class="done-mark">✓</span>' : ""}</h2>
+          <div class="latin">${esc(t.latin)}</div>
+          ${r.koht ? `<div class="place">📍 ${esc(r.koht)}</div>` : ""}
+        </div>
+        <div class="tags">
+          ${t.parts.map(p => `<button class="part" type="button" data-part="${p.key}" aria-pressed="${!!(r.parts && r.parts[p.key])}">${esc(p.label)}</button>`).join("")}
+          ${t.kasutamine ? `<span class="tag">+ kasutamine</span>` : ""}
+          <button class="part plain" type="button" data-label="${t.id}" aria-expanded="${expandedId === t.id}">${r.koht || r.korjaja ? "✎ sildi andmed" : "+ koht, korjaja, aeg"}</button>
+        </div>
+        ${expandedId === t.id && mode !== "readonly" ? quickForm(t, r) : ""}
+      </article>`;
+    }).join("");
+  }
+
+  function renderDetail(full) {
+    const t = BY_ID[openId]; if (!t) return;
+    const sheet = $("#detail");
+    const r = rec(t.id);
+    const ro = mode === "readonly";
+    const focused = sheet.contains(document.activeElement) && /INPUT|TEXTAREA/.test(document.activeElement.tagName);
+    if (!full && sheet.innerHTML && focused) {
+      sheet.querySelectorAll(".part").forEach(b => b.setAttribute("aria-pressed", String(!!(r.parts && r.parts[b.dataset.part]))));
+      return;
+    }
+    const credit = key => { const c = CREDITS[key]; return c ? `<a href="${esc(c.url)}" target="_blank" rel="noopener">${esc(c.title)}</a> – ${esc(c.artist || "tundmatu autor")}, ${esc(c.license)}` : ""; };
+    sheet.innerHTML = `<div class="wrap">
+      <div class="sheet-top">
+        <button class="back" type="button" data-close aria-label="Tagasi">←</button>
+        <h2>${t.nr}. ${esc(t.name)}<span class="latin">${esc(t.latin)}</span></h2>
+      </div>
+      <div class="gallery" id="gallery">${t.images.map(i => `<figure><img src="${imgSrc(i.src)}" alt="${esc(i.caption)}"><figcaption>${esc(i.caption)}</figcaption></figure>`).join("")}
+        <div class="more"><p>Kas pildid ei aidanud? Otsi juurde:</p>
+          <a class="btn primary" href="https://www.google.com/search?tbm=isch&q=${encodeURIComponent(t.latin.split(",")[0] + " " + (t.group === "okaspuu" ? "okkad käbi" : "leht vili"))}" target="_blank" rel="noopener">Google pildiotsing</a>
+          <a class="btn" href="https://commons.wikimedia.org/w/index.php?search=${encodeURIComponent(t.latin.split(",")[0])}&ns6=1" target="_blank" rel="noopener">Wikimedia Commons</a>
+          <a class="btn ghost" href="https://et.wikipedia.org/wiki/${encodeURIComponent(t.name.replace(/ /g, "_"))}" target="_blank" rel="noopener">Vikipeedia (et)</a>
+        </div>
+      </div>
+      <div class="dots" id="dots">${t.images.map((_, i) => `<i class="${i ? "" : "on"}"></i>`).join("")}<i></i></div>
+      <p class="hint">Keri pilte sõrmega ← →</p>
+      <div class="collect" id="collect">
+        <h3>Kogutud<small>Märgi osad ja täida sildi andmed: koht, kes korjas, kuupäev</small></h3>
+        <div class="tags">${t.parts.map(p => `<button class="part" type="button" data-part="${p.key}" aria-pressed="${!!(r.parts && r.parts[p.key])}" ${ro ? "disabled" : ""}>${esc(p.label)}</button>`).join("")}</div>
+        ${LABEL_FIELDS.map(f => `<div class="field"><label for="f-${f.key}">${esc(f.label)}</label><input id="f-${f.key}" type="${f.type || "text"}" data-field="${f.key}" value="${esc(r[f.key])}" placeholder="${esc(f.placeholder || "")}" ${ro ? "disabled" : ""} autocomplete="off"></div>`).join("")}
+        <div class="photo">
+          ${r.photo ? `<img src="${r.photo}" alt="Minu foto">` : ""}
+          <div class="row">
+            ${ro ? "" : `<label class="btn photo-btn">${r.photo ? "Vaheta foto" : "Lisa oma foto"}<input type="file" accept="image/*" capture="environment" data-photo></label>`}
+            ${r.photo && !ro ? `<button class="btn ghost" type="button" data-photo-remove>Eemalda foto</button>` : ""}
+            <button class="btn" type="button" data-copy>Kopeeri sildi tekst</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="section"><h3>Kuidas ära tunda</h3><ul>${t.tunnused.map(x => `<li>${esc(x)}</li>`).join("")}</ul></div>
+      <div class="section"><h3>Ära aja segi</h3><p class="note">${esc(t.segi)}</p></div>
+      <div class="section"><h3>Kus kasvab</h3><p>${esc(t.kasvab)}</p></div>
+      ${t.kasutamine ? `<div class="section"><h3>Kasutamine</h3><ul>${(t.kasutus || []).map(x => `<li>${esc(x)}</li>`).join("")}</ul>
+        <div class="field"><label for="f-kasutamine">Sinu kokkuvõte kasutamisest (kirjuta oma sõnadega)</label><textarea id="f-kasutamine" data-field="kasutamine" ${ro ? "disabled" : ""} placeholder="nt Kuusest tehakse ehituspuitu ja paberit…">${esc(r.kasutamine)}</textarea></div></div>` : ""}
+
+      <p class="credits">Fotod: ${t.images.map(i => credit(i.src)).filter(Boolean).join("; ")} (Wikimedia Commons).</p>
+    </div>`;
+    sheet.hidden = false;
+  }
+
+  function labelText(t) {
+    const r = items[t.id] || {};
+    return `${t.name} (${t.latin})\nKoht: ${r.koht || ""}\nKorjas: ${r.korjaja || ""}\nKuupäev: ${fmtDate(r.kuupaev)}`;
+  }
+  function renderLabels() {
+    const sheet = $("#labels");
+    const cards = TREES.map(t => {
+      const r = items[t.id] || { parts: {} };
+      const any = t.parts.some(p => r.parts && r.parts[p.key]);
+      const miss = s => s ? esc(s) : `<span class="missing">– puudu –</span>`;
+      return `<div class="label-card${any ? "" : " todo"}">
+        <b>${esc(t.name)}</b><i>${esc(t.latin)}</i>
+        <dl><dt>Koht</dt><dd>${miss(r.koht)}</dd><dt>Korjas</dt><dd>${miss(r.korjaja)}</dd><dt>Kuupäev</dt><dd>${miss(fmtDate(r.kuupaev))}</dd>
+        <dt>Osad</dt><dd>${t.parts.map(p => (r.parts && r.parts[p.key] ? "✓ " : "☐ ") + esc(p.label)).join(", ")}</dd></dl>
+      </div>`;
+    }).join("");
+    sheet.innerHTML = `<div class="wrap">
+      <div class="sheet-top"><button class="back" type="button" data-close aria-label="Tagasi">←</button><h2>Sildid<span class="latin">liik · koht · korjaja · kuupäev</span></h2></div>
+      <div class="row" style="margin:0 0 14px"><button class="btn" type="button" data-copy-all>Kopeeri kõik sildid</button><button class="btn" type="button" data-print>Prindi</button></div>
+      <div class="labels">${cards}</div>
+    </div>`;
+    sheet.hidden = false;
+  }
+
+  // --- foto ---
+  function readPhoto(file, cb) {
+    const url = URL.createObjectURL(file);
+    const im = new Image();
+    im.onload = () => {
+      const max = 560, s = Math.min(1, max / Math.max(im.width, im.height));
+      const c = document.createElement("canvas");
+      c.width = Math.round(im.width * s); c.height = Math.round(im.height * s);
+      c.getContext("2d").drawImage(im, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url);
+      cb(c.toDataURL("image/jpeg", 0.72));
+    };
+    im.onerror = () => { URL.revokeObjectURL(url); toast("Fotot ei õnnestunud lugeda."); };
+    im.src = url;
+  }
+
+  let toastTimer;
+  function toast(msg) { const el = $("#toast"); el.textContent = msg; el.classList.add("show"); clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove("show"), 2200); }
+  function copy(text) {
+    const done = () => toast("Kopeeritud");
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, () => fallback());
+    else fallback();
+    function fallback() {
+      const ta = document.createElement("textarea"); ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+      document.body.appendChild(ta); ta.select();
+      try { document.execCommand("copy"); done(); } catch (e) { toast("Kopeerimine ei õnnestunud"); }
+      document.body.removeChild(ta);
+    }
+  }
+
+  // --- sündmused ---
+  $("#filters").addEventListener("click", e => {
+    const b = e.target.closest("[data-filter]"); if (!b) return;
+    filter = b.dataset.filter;
+    $("#filters").querySelectorAll(".chip").forEach(c => c.setAttribute("aria-pressed", String(c === b)));
+    renderList();
+  });
+  $("#list").addEventListener("click", e => {
+    const card = e.target.closest(".card"); if (!card) return;
+    const lab = e.target.closest("[data-label]");
+    if (lab) { expandedId = expandedId === card.dataset.id ? null : card.dataset.id; renderList(); if (expandedId) { const i = $(`#list .card[data-id="${expandedId}"] input[data-field="koht"]`); if (i && !i.value) i.focus({ preventScroll: true }); } return; }
+    if (e.target.closest("[data-done]")) { expandedId = null; renderList(); return; }
+    if (e.target.closest(".quick")) return;
+    const part = e.target.closest("[data-part]");
+    if (part) { togglePart(card.dataset.id, part.dataset.part); return; }
+    if (e.target.closest("[data-open]")) { openId = card.dataset.id; renderDetail(true); window.scrollTo(0, 0); $("#detail").scrollTop = 0; }
+  });
+  $("#detail").addEventListener("click", e => {
+    if (e.target.closest("[data-close]")) { openId = null; $("#detail").hidden = true; return; }
+    const part = e.target.closest("[data-part]"); if (part) { togglePart(openId, part.dataset.part); return; }
+    if (e.target.closest("[data-copy]")) { copy(labelText(BY_ID[openId])); return; }
+    if (e.target.closest("[data-photo-remove]")) { rec(openId).photo = ""; persist(openId, true); renderDetail(true); return; }
+  });
+  $("#list").addEventListener("input", e => {
+    const f = e.target.closest("[data-field]"); const card = e.target.closest(".card");
+    if (f && card) { setField(card.dataset.id, f.dataset.field, f.value); const pl = card.querySelector(".place"); if (f.dataset.field === "koht" && pl) pl.textContent = "📍 " + f.value; }
+  });
+  $("#list").addEventListener("focusout", e => {
+    // kui lahkutakse kiirvormist, uuenda kaart (koht kaardile jne), aga jäta vorm lahti
+    setTimeout(() => { if (!$("#list").contains(document.activeElement)) renderList(); }, 50);
+  });
+  $("#detail").addEventListener("scroll", e => {
+    const g = e.target; if (!g.classList || !g.classList.contains("gallery")) return;
+    const kids = [...g.children]; const w = kids[0] ? kids[0].offsetWidth + 10 : 1;
+    const idx = Math.min(kids.length - 1, Math.round(g.scrollLeft / w));
+    $("#dots").querySelectorAll("i").forEach((d, i) => d.classList.toggle("on", i === idx));
+  }, true);
+  $("#detail").addEventListener("input", e => {
+    const f = e.target.closest("[data-field]"); if (f) setField(openId, f.dataset.field, f.value);
+  });
+  $("#detail").addEventListener("change", e => {
+    const inp = e.target.closest("[data-photo]"); if (!inp || !inp.files[0]) return;
+    const id = openId;
+    readPhoto(inp.files[0], data => { if (data.length > 200000) { toast("Foto on liiga suur"); return; } rec(id).photo = data; persist(id, true); if (openId === id) renderDetail(true); });
+  });
+  $("#labelsBtn").addEventListener("click", () => { renderLabels(); $("#labels").scrollTop = 0; });
+  $("#shareBtn").addEventListener("click", () => {
+    const url = shareLink();
+    if (navigator.share) navigator.share({ title: "Atsi lehekogu", url }).catch(() => copy(url));
+    else copy(url);
+  });
+  $("#labels").addEventListener("click", e => {
+    if (e.target.closest("[data-close]")) { $("#labels").hidden = true; return; }
+    if (e.target.closest("[data-copy-all]")) { copy(TREES.map(labelText).join("\n\n")); return; }
+    if (e.target.closest("[data-print]")) window.print();
+  });
+  document.addEventListener("keydown", e => { if (e.key === "Escape") { openId = null; $("#detail").hidden = true; $("#labels").hidden = true; } });
+
+  render();
+  connectRemote();
+
+  // Töötab ka võrguta (ainult päris veebiaadressil, mitte failina ega Artifactis)
+  if ("serviceWorker" in navigator && /^https?:/.test(location.protocol) && !IN_ARTIFACT && location.hostname !== "localhost") {
+    navigator.serviceWorker.register("./sw.js").catch(() => {});
+  }
+  window.addEventListener("hashchange", () => { if (window.FIREBASE_CONFIG) location.reload(); });
+})();
+</script>

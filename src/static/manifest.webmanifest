@@ -1,0 +1,15 @@
+{
+  "name": "Atsi lehekogu",
+  "short_name": "Lehekogu",
+  "description": "Kooli lehekogu: 15 puud, äratundmine ja kogutud osade märkimine.",
+  "lang": "et",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#F1F4EB",
+  "theme_color": "#3A7A4B",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
