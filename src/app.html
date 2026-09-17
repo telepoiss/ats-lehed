@@ -203,7 +203,6 @@ __IMAGES__
   const BY_ID = Object.fromEntries(TREES.map(t => [t.id, t]));
 
   let items = loadLocal();
-  Object.keys(items).forEach(id => { lastSaved[id] = JSON.stringify(items[id]); });
   let mode = "local";           // local | db | readonly
   let remote = null, dbReady = false;   // remote: { set(id, data), subscribe(next, err) }
   let filter = "all";
@@ -595,6 +594,7 @@ __IMAGES__
   });
   document.addEventListener("keydown", e => { if (e.key === "Escape") { openId = null; $("#detail").hidden = true; $("#labels").hidden = true; $("#history").hidden = true; } });
 
+  Object.keys(items).forEach(id => { lastSaved[id] = JSON.stringify(items[id]); });
   log = loadLog();
   render();
   connectRemote();
