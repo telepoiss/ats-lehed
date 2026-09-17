@@ -59,6 +59,12 @@
   .btn { border: 1px solid var(--line); background: var(--card); border-radius: 10px; padding: 9px 14px; font-weight: 700; font-size: 14px; }
   .btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
   .btn.ghost { background: transparent; }
+  .top-btns { display: flex; gap: 6px; }
+  .hist { display: grid; gap: 8px; }
+  .hist-row { background: var(--card); border-radius: 10px; padding: 10px 12px; display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; align-items: center; box-shadow: var(--shadow); }
+  .hist-row .when { grid-column: 1 / -1; font-size: 12px; color: var(--muted); }
+  .hist-row .what { font-size: 15px; }
+  .hist-row .btn { min-height: 40px; padding-inline: 12px; }
 
   /* Filtrid */
   .filters { display: flex; gap: 8px; overflow-x: auto; padding-block: 12px 4px; scrollbar-width: none; }
@@ -162,7 +168,7 @@
       <h1>Atsi lehekogu</h1>
       <div class="sub"><span id="progress">0 / 15 puud koos</span><span id="status" class="status">Ainult selles seadmes</span></div>
     </div>
-    <button class="btn" id="labelsBtn" type="button">Sildid</button>
+    <div class="top-btns"><button class="btn ghost" id="historyBtn" type="button">Ajalugu</button><button class="btn" id="labelsBtn" type="button">Sildid</button></div>
     <div class="bar"><i id="bar"></i></div>
   </div>
 </header>
@@ -181,6 +187,7 @@
 
 <section class="sheet" id="detail" hidden aria-modal="true" role="dialog"></section>
 <section class="sheet" id="labels" hidden aria-modal="true" role="dialog"></section>
+<section class="sheet" id="history" hidden aria-modal="true" role="dialog"></section>
 <div class="toast" id="toast" role="status"></div>
 
 <script>
@@ -464,11 +471,16 @@ window.CREDITS = {"mand_oks": {"title": "Pinus sylvestris 2020 G2.jpg", "artist"
   const BY_ID = Object.fromEntries(TREES.map(t => [t.id, t]));
 
   let items = loadLocal();
+  Object.keys(items).forEach(id => { lastSaved[id] = JSON.stringify(items[id]); });
   let mode = "local";           // local | db | readonly
   let remote = null, dbReady = false;   // remote: { set(id, data), subscribe(next, err) }
   let filter = "all";
   let openId = null;
   let expandedId = null;   // kaart, millel on kiirvorm lahti
+  let log = [];            // muudatuste logi, uusim ees
+  const lastSaved = {};    // id -> viimati salvestatud kirje (JSON), muudatuste logi jaoks
+  const LS_LOG = "lehekogu.log" + (window.FIREBASE_CONFIG ? ":" + KOGU : "");
+  const FIELD_LABEL = { koht: "koht", korjaja: "korjaja", kuupaev: "kuupäev", kasutamine: "kasutamise kokkuvõte" };
   const queues = {}, timers = {};
 
   const $ = (s, r) => (r || document).querySelector(s);
@@ -479,6 +491,37 @@ window.CREDITS = {"mand_oks": {"title": "Pinus sylvestris 2020 G2.jpg", "artist"
 
   function loadLocal() { try { return JSON.parse(localStorage.getItem(LS_KEY) || "{}") || {}; } catch (e) { return {}; } }
   function saveLocal() { try { localStorage.setItem(LS_KEY, JSON.stringify(items)); } catch (e) {} }
+  function loadLog() { try { return JSON.parse(localStorage.getItem(LS_LOG) || "[]") || []; } catch (e) { return []; } }
+  function saveLog() { try { localStorage.setItem(LS_LOG, JSON.stringify(log.slice(0, 200))); } catch (e) {} }
+  function stripPhoto(r) { const c = Object.assign({}, r); if (c.photo) c.photo = "*"; return c; }
+  // Kirjeldab kahe seisu vahe eesti keeles; null, kui midagi ei muutunud
+  function diffEntry(id, before, after) {
+    const t = BY_ID[id]; if (!t) return null;
+    const parts = [];
+    t.parts.forEach(p => { const a = !!(before.parts || {})[p.key], b = !!(after.parts || {})[p.key]; if (a !== b) parts.push(`${p.label} ${b ? "✓" : "✗"}`); });
+    Object.keys(FIELD_LABEL).forEach(k => { const a = before[k] || "", b = after[k] || ""; if (a !== b) parts.push(b ? `${FIELD_LABEL[k]} „${k === "kuupaev" ? fmtDate(b) : (b.length > 40 ? b.slice(0, 40) + "…" : b)}“` : `${FIELD_LABEL[k]} kustutatud`); });
+    const pa = before.photo || "", pb = after.photo || "";
+    if (pa !== pb) parts.push(!pa ? "foto lisatud" : !pb ? "foto eemaldatud" : "foto vahetatud");
+    if (!parts.length) return null;
+    let who = ""; try { who = localStorage.getItem(LS_NAME) || ""; } catch (e) {}
+    // foto hoitakse logis ainult siis, kui just foto muutus (et tagasivõtmine töötaks)
+    const keepPhoto = pa !== pb;
+    return { t: Date.now(), item: id, who, text: `${t.name}: ${parts.join(", ")}`, before: keepPhoto ? before : stripPhoto(before), after: keepPhoto ? after : stripPhoto(after) };
+  }
+  function addLog(entry) {
+    if (remote && remote.addLog) { remote.addLog(entry).catch(() => {}); }
+    else { entry.id = "l" + entry.t; log.unshift(entry); saveLog(); if (!$("#history").hidden) renderHistory(); }
+  }
+  function undo(entryId) {
+    const e = log.find(x => x.id === entryId); if (!e || mode === "readonly") return;
+    const cur = rec(e.item);
+    const restored = Object.assign({}, cur, e.before);
+    if (e.before.photo === "*") restored.photo = cur.photo;   // fotot logis polnud, jätame praeguse
+    items[e.item] = restored;
+    persist(e.item, true);
+    render();
+    toast("Tagasi võetud");
+  }
   function rec(id) { return items[id] || (items[id] = { parts: {}, koht: "", korjaja: "", kuupaev: "", kasutamine: "", photo: "" }); }
   function hasContent(r) { return !!r && (Object.values(r.parts || {}).some(Boolean) || r.koht || r.korjaja || r.kasutamine || r.photo); }
   function isDone(t) { const r = items[t.id]; return !!r && t.parts.every(p => r.parts && r.parts[p.key]); }
@@ -487,11 +530,15 @@ window.CREDITS = {"mand_oks": {"title": "Pinus sylvestris 2020 G2.jpg", "artist"
   // --- salvestamine: alati seadmesse, jagatud olekus ka andmebaasi ---
   function persist(id, immediate) {
     saveLocal();
-    if (mode !== "db" || !remote) return;
     clearTimeout(timers[id]);
     const write = () => {
       delete timers[id];
       const data = JSON.parse(JSON.stringify(rec(id)));
+      const prev = lastSaved[id] ? JSON.parse(lastSaved[id]) : { parts: {} };
+      lastSaved[id] = JSON.stringify(data);
+      const entry = diffEntry(id, prev, data);
+      if (entry) addLog(entry);
+      if (mode !== "db" || !remote) return;
       queues[id] = (queues[id] || Promise.resolve())
         .then(() => remote.set(id, data))
         .catch(e => {
@@ -511,9 +558,14 @@ window.CREDITS = {"mand_oks": {"title": "Pinus sylvestris 2020 G2.jpg", "artist"
         return;
       }
     }
-    snap.docs.forEach(d => { if (!timers[d.id]) items[d.id] = Object.assign({ parts: {} }, d.data()); });
+    snap.docs.forEach(d => { if (!timers[d.id]) { items[d.id] = Object.assign({ parts: {} }, d.data()); lastSaved[d.id] = JSON.stringify(items[d.id]); } });
     saveLocal();
     render();
+  }
+  function onLogSnapshot(snap) {
+    log = snap.docs.map(d => Object.assign({ id: d.id }, d.data()));
+    saveLog();
+    if (!$("#history").hidden) renderHistory();
   }
   function onRemoteError(err) { if (mode === "db") { mode = "local"; renderStatus(); } }
 
@@ -528,9 +580,11 @@ window.CREDITS = {"mand_oks": {"title": "Pinus sylvestris 2020 G2.jpg", "artist"
       firebase.initializeApp(window.FIREBASE_CONFIG);
       const fs = firebase.firestore();
       try { await fs.enablePersistence({ synchronizeTabs: true }); } catch (e) { /* mitu akent või pole toetatud */ }
-      const col = fs.collection("kogud").doc(KOGU).collection("items");
-      remote = { set: (id, data) => col.doc(id).set(data) };
+      const kogu = fs.collection("kogud").doc(KOGU);
+      const col = kogu.collection("items"), logCol = kogu.collection("log");
+      remote = { set: (id, data) => col.doc(id).set(data), addLog: e => logCol.add(e) };
       col.onSnapshot({ includeMetadataChanges: false }, onRemoteSnapshot, onRemoteError);
+      logCol.orderBy("t", "desc").limit(150).onSnapshot(onLogSnapshot, () => {});
       return true;
     } catch (e) { remote = null; return false; }
   }
@@ -539,8 +593,9 @@ window.CREDITS = {"mand_oks": {"title": "Pinus sylvestris 2020 G2.jpg", "artist"
       if (!IN_ARTIFACT) return false;
       const d = await window.claude.use("db");
       if (!d) return false;
-      remote = { set: (id, data) => d.doc("items/" + id).set(data) };
+      remote = { set: (id, data) => d.doc("items/" + id).set(data), addLog: e => d.collection("log").add(e) };
       d.collection("items").onSnapshot(onRemoteSnapshot, onRemoteError);
+      d.collection("log").orderBy("t", "desc").limit(150).onSnapshot(onLogSnapshot, () => {});
       return true;
     } catch (e) { return false; }
   }
@@ -573,7 +628,7 @@ window.CREDITS = {"mand_oks": {"title": "Pinus sylvestris 2020 G2.jpg", "artist"
   }
 
   // --- vaated ---
-  function render() { renderProgress(); renderStatus(); renderList(); if (openId) renderDetail(false); if (!$("#labels").hidden) renderLabels(); }
+  function render() { renderProgress(); renderStatus(); renderList(); if (openId) renderDetail(false); if (!$("#labels").hidden) renderLabels(); if (!$("#history").hidden) renderHistory(); }
 
   function renderProgress() {
     const n = doneCount();
@@ -705,6 +760,21 @@ window.CREDITS = {"mand_oks": {"title": "Pinus sylvestris 2020 G2.jpg", "artist"
     sheet.hidden = false;
   }
 
+  function fmtWhen(t) { const d = new Date(t); const p = n => String(n).padStart(2, "0"); return `${p(d.getDate())}.${p(d.getMonth() + 1)} ${p(d.getHours())}:${p(d.getMinutes())}`; }
+  function renderHistory() {
+    const sheet = $("#history");
+    const rows = log.length ? log.map(e => `<div class="hist-row">
+        <div class="when">${fmtWhen(e.t)}${e.who ? " · " + esc(e.who) : ""}</div>
+        <div class="what">${esc(e.text)}</div>
+        ${mode === "readonly" ? "" : `<button class="btn" type="button" data-undo="${esc(e.id)}">Võta tagasi</button>`}
+      </div>`).join("") : `<p class="empty">Muudatusi veel pole.</p>`;
+    sheet.innerHTML = `<div class="wrap">
+      <div class="sheet-top"><button class="back" type="button" data-close aria-label="Tagasi">←</button><h2>Ajalugu<span class="latin">kes ja mida muutis · „Võta tagasi“ taastab eelmise seisu</span></h2></div>
+      <div class="hist">${rows}</div>
+    </div>`;
+    sheet.hidden = false;
+  }
+
   // --- foto ---
   function readPhoto(file, cb) {
     const url = URL.createObjectURL(file);
@@ -781,13 +851,19 @@ window.CREDITS = {"mand_oks": {"title": "Pinus sylvestris 2020 G2.jpg", "artist"
     readPhoto(inp.files[0], data => { if (data.length > 200000) { toast("Foto on liiga suur"); return; } rec(id).photo = data; persist(id, true); if (openId === id) renderDetail(true); });
   });
   $("#labelsBtn").addEventListener("click", () => { renderLabels(); $("#labels").scrollTop = 0; });
+  $("#historyBtn").addEventListener("click", () => { renderHistory(); $("#history").scrollTop = 0; });
+  $("#history").addEventListener("click", e => {
+    if (e.target.closest("[data-close]")) { $("#history").hidden = true; return; }
+    const u = e.target.closest("[data-undo]"); if (u) undo(u.dataset.undo);
+  });
   $("#labels").addEventListener("click", e => {
     if (e.target.closest("[data-close]")) { $("#labels").hidden = true; return; }
     if (e.target.closest("[data-copy-all]")) { copy(TREES.map(labelText).join("\n\n")); return; }
     if (e.target.closest("[data-print]")) window.print();
   });
-  document.addEventListener("keydown", e => { if (e.key === "Escape") { openId = null; $("#detail").hidden = true; $("#labels").hidden = true; } });
+  document.addEventListener("keydown", e => { if (e.key === "Escape") { openId = null; $("#detail").hidden = true; $("#labels").hidden = true; $("#history").hidden = true; } });
 
+  log = loadLog();
   render();
   connectRemote();
 

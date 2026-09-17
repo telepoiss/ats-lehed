@@ -1,12 +1,19 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Iga kogu (kood lingis) on omaette; lubatud on ainult puude kirjed, kuni 300 KB
+    // Iga kogu (kood lingis) on omaette; lubatud on ainult puude kirjed ja muudatuste logi
     match /kogud/{kogu}/items/{item} {
       allow read: if true;
       allow write: if request.resource == null
                    || (request.resource.data.keys().hasOnly(['parts','koht','korjaja','kuupaev','kasutamine','photo'])
                        && request.resource.data.get('photo', '').size() < 300000);
+    }
+    match /kogud/{kogu}/log/{entry} {
+      allow read: if true;
+      allow create: if request.resource.data.keys().hasOnly(['t','item','who','text','before','after'])
+                    && request.resource.data.t is number
+                    && request.resource.data.text is string && request.resource.data.text.size() < 500;
+      allow update, delete: if false;   // logi ei saa tagantjärele muuta
     }
   }
 }
