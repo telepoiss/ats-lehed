@@ -94,7 +94,8 @@
   .part[aria-pressed="true"]::before { background: var(--accent); border-color: var(--accent); background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Cpath d='M3 7.5l2.5 2.5L11 4.5' fill='none' stroke='white' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background-size: 18px; background-position: center; background-repeat: no-repeat; }
   .quick { grid-column: 1 / -1; border-top: 1px solid var(--line); background: var(--accent-soft); padding: 10px 12px 12px; display: grid; gap: 8px; }
   .qf { display: grid; gap: 3px; font-size: 13px; color: var(--muted); font-weight: 700; }
-  .qf input { width: 100%; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; background: var(--card); min-height: 44px; font-weight: 400; color: var(--ink); }
+  .qf input, .qf textarea { width: 100%; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; background: var(--card); min-height: 44px; font-weight: 400; color: var(--ink); }
+  .qf textarea { resize: vertical; line-height: 1.4; }
   .qrow { display: flex; gap: 8px; justify-content: space-between; align-items: center; margin-top: 2px; }
   .qrow .btn { min-height: 44px; }
   .tag { font-size: 12px; color: var(--warn); background: var(--warn-soft); border-radius: 6px; padding: 4px 8px; font-weight: 700; letter-spacing: .02em; }
@@ -652,12 +653,13 @@ window.CREDITS = {"mand_oks": {"title": "Pinus sylvestris 2020 G2.jpg", "artist"
   function quickForm(t, r) {
     return `<div class="quick">
       ${LABEL_FIELDS.map(f => `<label class="qf"><span>${esc(f.label)}</span><input type="${f.type || "text"}" data-field="${f.key}" value="${esc(r[f.key] || "")}" placeholder="${esc(f.placeholder || "")}" autocomplete="off"></label>`).join("")}
+      ${t.kasutamine ? `<label class="qf"><span>Kasutamine (oma sõnadega)</span><textarea data-field="kasutamine" rows="3" placeholder="Milleks seda puud kasutatakse? Vihjeid leiad „Rohkem infot“ alt.">${esc(r.kasutamine || "")}</textarea></label>` : ""}
       <div class="qrow"><button class="btn primary" type="button" data-done>Valmis</button><button class="btn ghost" type="button" data-open="${t.id}">Rohkem infot →</button></div>
     </div>`;
   }
   function renderList() {
     const list = $("#list");
-    const focused = list.contains(document.activeElement) && /INPUT/.test(document.activeElement.tagName);
+    const focused = list.contains(document.activeElement) && /INPUT|TEXTAREA/.test(document.activeElement.tagName);
     if (focused && list.innerHTML) {
       list.querySelectorAll(".card").forEach(c => { const r = items[c.dataset.id] || { parts: {} }; c.querySelectorAll("[data-part]").forEach(b => b.setAttribute("aria-pressed", String(!!(r.parts && r.parts[b.dataset.part])))); });
       return;
