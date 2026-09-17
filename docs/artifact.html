@@ -44,7 +44,6 @@
   .btn { border: 1px solid var(--line); background: var(--card); border-radius: 10px; padding: 9px 14px; font-weight: 700; font-size: 14px; }
   .btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
   .btn.ghost { background: transparent; }
-  .top-btns { display: flex; gap: 6px; }
 
   /* Filtrid */
   .filters { display: flex; gap: 8px; overflow-x: auto; padding-block: 12px 4px; scrollbar-width: none; }
@@ -148,7 +147,7 @@
       <h1>Atsi lehekogu</h1>
       <div class="sub"><span id="progress">0 / 15 puud koos</span><span id="status" class="status">Ainult selles seadmes</span></div>
     </div>
-    <div class="top-btns"><button class="btn ghost" id="shareBtn" type="button" hidden title="Kopeeri link, millega teised näevad sama nimekirja">Jaga</button><button class="btn" id="labelsBtn" type="button">Sildid</button></div>
+    <button class="btn" id="labelsBtn" type="button">Sildid</button>
     <div class="bar"><i id="bar"></i></div>
   </div>
 </header>
@@ -558,9 +557,7 @@ window.CREDITS = {"mand_oks": {"title": "Pinus sylvestris 2020 G2.jpg", "artist"
     const el = $("#status");
     el.className = "status " + mode;
     el.textContent = mode === "db" ? "Jagatud – kõik näevad sama" : mode === "readonly" ? "Ainult vaatamiseks" : "Ainult selles seadmes";
-    $("#shareBtn").hidden = !(mode === "db" && window.FIREBASE_CONFIG && !IN_ARTIFACT);
   }
-  function shareLink() { return location.origin + location.pathname + (KOGU === (window.DEFAULT_KOGU || "kogu") ? "" : "#kogu=" + KOGU); }
 
   function visible(t) {
     switch (filter) {
@@ -757,11 +754,6 @@ window.CREDITS = {"mand_oks": {"title": "Pinus sylvestris 2020 G2.jpg", "artist"
     readPhoto(inp.files[0], data => { if (data.length > 200000) { toast("Foto on liiga suur"); return; } rec(id).photo = data; persist(id, true); if (openId === id) renderDetail(true); });
   });
   $("#labelsBtn").addEventListener("click", () => { renderLabels(); $("#labels").scrollTop = 0; });
-  $("#shareBtn").addEventListener("click", () => {
-    const url = shareLink();
-    if (navigator.share) navigator.share({ title: "Atsi lehekogu", url }).catch(() => copy(url));
-    else copy(url);
-  });
   $("#labels").addEventListener("click", e => {
     if (e.target.closest("[data-close]")) { $("#labels").hidden = true; return; }
     if (e.target.closest("[data-copy-all]")) { copy(TREES.map(labelText).join("\n\n")); return; }

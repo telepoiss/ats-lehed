@@ -60,4 +60,3 @@ service cloud.firestore {
 ```
 
 Kõik, kes avavad https://telepoiss.github.io/ats-lehed/, jagavad ühte kogu (`DEFAULT_KOGU` failis `src/config.js`). Eraldi kogu saab lingiga `#kogu=minukood`.
-Päises olev nupp "Jaga" kopeerib lingi.
