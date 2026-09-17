@@ -1,14 +1,12 @@
 // Firebase seadistus jagatud andmebaasi jaoks (GitHub Pagesi versioon).
-// Kuni see on null, salvestab äpp ainult seadmesse.
-// Firebase'i konsoolist: Project settings → Your apps → Web app → "firebaseConfig".
-// Veebi-konfiguratsioon ei ole saladus, selle võib avalikku repo panna.
-window.FIREBASE_CONFIG = null;
-// Näide:
-// window.FIREBASE_CONFIG = {
-//   apiKey: "AIza...",
-//   authDomain: "ats-lehed.firebaseapp.com",
-//   projectId: "ats-lehed",
-//   storageBucket: "ats-lehed.firebasestorage.app",
-//   messagingSenderId: "1234567890",
-//   appId: "1:1234567890:web:abcdef",
-// };
+// Veebi-konfiguratsioon ei ole saladus; ligipääsu piiravad Firestore'i reeglid (firebase/firestore.rules).
+window.FIREBASE_CONFIG = {
+  apiKey: "AIzaSyAJR95Mpcpeb8bi-WjLQ6lXUU5EOotsytg",
+  authDomain: "ats-lehed-qpu23-4cd68.firebaseapp.com",
+  projectId: "ats-lehed-qpu23-4cd68",
+  storageBucket: "ats-lehed-qpu23-4cd68.firebasestorage.app",
+  messagingSenderId: "515566733380",
+  appId: "1:515566733380:web:0a9ebe0bb2ce335b1c9411",
+};
+// Kogu, mida kõik lingi avajad jagavad. Uue aasta jaoks muuda nt "ats2027".
+window.DEFAULT_KOGU = "ats2026";

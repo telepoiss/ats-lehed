@@ -430,14 +430,10 @@ window.CREDITS = {"mand_oks": {"title": "Pinus sylvestris 2020 G2.jpg", "artist"
   const LS_NAME = "lehekogu.korjaja";
 
   // Kogu kood: kõik, kes avavad sama lingi (#kogu=...), näevad sama nimekirja.
+  // Vaikimisi jagavad kõik lingi avajad ühte kogu (DEFAULT_KOGU); #kogu=xyz lingis annab eraldi kogu.
   function roomCode() {
     const m = location.hash.match(/kogu=([A-Za-z0-9_-]{3,40})/);
-    let code = m ? m[1] : null;
-    if (!code) { try { code = localStorage.getItem("lehekogu.kogu"); } catch (e) {} }
-    if (!code) code = Math.random().toString(36).slice(2, 8);
-    try { localStorage.setItem("lehekogu.kogu", code); } catch (e) {}
-    if (!m && window.FIREBASE_CONFIG && !IN_ARTIFACT) { try { history.replaceState(null, "", "#kogu=" + code); } catch (e) {} }
-    return code;
+    return m ? m[1] : (window.DEFAULT_KOGU || "kogu");
   }
   const BY_ID = Object.fromEntries(TREES.map(t => [t.id, t]));
 
@@ -564,7 +560,7 @@ window.CREDITS = {"mand_oks": {"title": "Pinus sylvestris 2020 G2.jpg", "artist"
     el.textContent = mode === "db" ? "Jagatud – kõik näevad sama" : mode === "readonly" ? "Ainult vaatamiseks" : "Ainult selles seadmes";
     $("#shareBtn").hidden = !(mode === "db" && window.FIREBASE_CONFIG && !IN_ARTIFACT);
   }
-  function shareLink() { return location.origin + location.pathname + "#kogu=" + KOGU; }
+  function shareLink() { return location.origin + location.pathname + (KOGU === (window.DEFAULT_KOGU || "kogu") ? "" : "#kogu=" + KOGU); }
 
   function visible(t) {
     switch (filter) {

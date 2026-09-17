@@ -429,19 +429,17 @@ const LABEL_FIELDS = [
 </script>
 <script>
 // Firebase seadistus jagatud andmebaasi jaoks (GitHub Pagesi versioon).
-// Kuni see on null, salvestab äpp ainult seadmesse.
-// Firebase'i konsoolist: Project settings → Your apps → Web app → "firebaseConfig".
-// Veebi-konfiguratsioon ei ole saladus, selle võib avalikku repo panna.
-window.FIREBASE_CONFIG = null;
-// Näide:
-// window.FIREBASE_CONFIG = {
-//   apiKey: "AIza...",
-//   authDomain: "ats-lehed.firebaseapp.com",
-//   projectId: "ats-lehed",
-//   storageBucket: "ats-lehed.firebasestorage.app",
-//   messagingSenderId: "1234567890",
-//   appId: "1:1234567890:web:abcdef",
-// };
+// Veebi-konfiguratsioon ei ole saladus; ligipääsu piiravad Firestore'i reeglid (firebase/firestore.rules).
+window.FIREBASE_CONFIG = {
+  apiKey: "AIzaSyAJR95Mpcpeb8bi-WjLQ6lXUU5EOotsytg",
+  authDomain: "ats-lehed-qpu23-4cd68.firebaseapp.com",
+  projectId: "ats-lehed-qpu23-4cd68",
+  storageBucket: "ats-lehed-qpu23-4cd68.firebasestorage.app",
+  messagingSenderId: "515566733380",
+  appId: "1:515566733380:web:0a9ebe0bb2ce335b1c9411",
+};
+// Kogu, mida kõik lingi avajad jagavad. Uue aasta jaoks muuda nt "ats2027".
+window.DEFAULT_KOGU = "ats2026";
 
 </script>
 <script>
@@ -459,14 +457,10 @@ window.CREDITS = {"mand_oks": {"title": "Pinus sylvestris 2020 G2.jpg", "artist"
   const LS_NAME = "lehekogu.korjaja";
 
   // Kogu kood: kõik, kes avavad sama lingi (#kogu=...), näevad sama nimekirja.
+  // Vaikimisi jagavad kõik lingi avajad ühte kogu (DEFAULT_KOGU); #kogu=xyz lingis annab eraldi kogu.
   function roomCode() {
     const m = location.hash.match(/kogu=([A-Za-z0-9_-]{3,40})/);
-    let code = m ? m[1] : null;
-    if (!code) { try { code = localStorage.getItem("lehekogu.kogu"); } catch (e) {} }
-    if (!code) code = Math.random().toString(36).slice(2, 8);
-    try { localStorage.setItem("lehekogu.kogu", code); } catch (e) {}
-    if (!m && window.FIREBASE_CONFIG && !IN_ARTIFACT) { try { history.replaceState(null, "", "#kogu=" + code); } catch (e) {} }
-    return code;
+    return m ? m[1] : (window.DEFAULT_KOGU || "kogu");
   }
   const BY_ID = Object.fromEntries(TREES.map(t => [t.id, t]));
 
@@ -593,7 +587,7 @@ window.CREDITS = {"mand_oks": {"title": "Pinus sylvestris 2020 G2.jpg", "artist"
     el.textContent = mode === "db" ? "Jagatud – kõik näevad sama" : mode === "readonly" ? "Ainult vaatamiseks" : "Ainult selles seadmes";
     $("#shareBtn").hidden = !(mode === "db" && window.FIREBASE_CONFIG && !IN_ARTIFACT);
   }
-  function shareLink() { return location.origin + location.pathname + "#kogu=" + KOGU; }
+  function shareLink() { return location.origin + location.pathname + (KOGU === (window.DEFAULT_KOGU || "kogu") ? "" : "#kogu=" + KOGU); }
 
   function visible(t) {
     switch (filter) {
