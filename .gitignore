@@ -2,3 +2,6 @@
 __pycache__/
 firebase-debug.log
 .firebase/
+
+# Claude Code local settings (can contain approved commands with secrets)
+.claude/settings.local.json
